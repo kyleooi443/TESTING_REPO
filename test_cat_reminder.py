@@ -17,11 +17,11 @@ class ReminderTimerTests(unittest.TestCase):
         self.assertEqual(len(shown), 2)
         self.assertEqual(scheduled[0][0], MINUTE_MS)
 
-    def test_walk_crosses_the_screen(self):
+    def test_walks_toward_its_head(self):
         positions = [walk_x(frame, 1280, 240) for frame in range(WALK_FRAMES)]
-        self.assertEqual(positions[0], 0)
-        self.assertEqual(positions[-1], 1040)
-        self.assertEqual(positions, sorted(positions))
+        self.assertEqual(positions[0], 1040)
+        self.assertEqual(positions[-1], 0)
+        self.assertEqual(positions, sorted(positions, reverse=True))
 
     def test_cat_styles_are_distinct(self):
         self.assertEqual(len(CAT_STYLES), 4)

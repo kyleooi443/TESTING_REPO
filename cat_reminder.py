@@ -28,9 +28,9 @@ CAT_STYLES = (
 
 
 def walk_x(frame, screen_width, window_width):
-    """Move from the left edge to the right edge over one walk."""
+    """Move toward the cat's head, from the right edge to the left edge."""
     distance = max(0, screen_width - window_width)
-    return round(distance * frame / (WALK_FRAMES - 1))
+    return distance - round(distance * frame / (WALK_FRAMES - 1))
 
 
 class ReminderTimer:
