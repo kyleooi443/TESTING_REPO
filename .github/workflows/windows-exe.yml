@@ -28,6 +28,19 @@ jobs:
         run: python -m unittest -v
       - name: Build native Windows executable
         run: msbuild windows/MinuteCat.csproj /p:Configuration=Release /verbosity:minimal
+      - name: Check that the Windows app opens
+        shell: powershell
+        run: |
+          $app = Start-Process -FilePath windows/bin/Release/Minute-Cat.exe -PassThru
+          try {
+            Start-Sleep -Seconds 5
+            $app.Refresh()
+            if ($app.HasExited) { throw "Minute Cat exited during startup" }
+            if ($app.MainWindowTitle -ne "Minute Cat") { throw "Minute Cat control window did not open" }
+          }
+          finally {
+            if (-not $app.HasExited) { Stop-Process -Id $app.Id -Force }
+          }
       - name: Publish executable in repository
         shell: bash
         run: |

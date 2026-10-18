@@ -12,6 +12,8 @@ The walking cat stays on top. On Windows, its background is transparent; other d
 
 **Windows:** [Download Minute-Cat.exe](https://raw.githubusercontent.com/kyleooi443/TESTING_REPO/main/Minute-Cat.exe), save it to your Downloads folder, and double-click it. No Python installation or ZIP extraction is needed. Keep the control window open for the cats to return every minute.
 
+The Windows app is built from [Windows source](windows/Program.cs) using .NET Framework 4.8, with the artwork embedded. If your browser reports a virus, leave the download blocked and share the detection name from Windows Security's Protection history so it can be investigated.
+
 **macOS/Linux or Python users:** save the single [Minute-Cat.pyz](Minute-Cat.pyz) file and run `python3 Minute-Cat.pyz`. This version requires Python 3 with Tkinter and a graphical desktop. The artwork is inside the file.
 
 If you download the repository ZIP instead, choose **Extract All** before opening `cat_reminder.py`. Keep the `assets` folder beside it. From the extracted directory, run:
