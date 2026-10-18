@@ -19,9 +19,9 @@ WALK_SECONDS = 10.0
 BACKGROUND = "#fff5e9"
 ASSET_DIR = Path(__file__).resolve().parent / "assets"
 SPRITE_SIZE = 512
-DISPLAY_SCALE = 3
-CAT_WINDOW_WIDTH = 200
-CAT_WINDOW_HEIGHT = 210
+DISPLAY_SCALE = 12
+CAT_WINDOW_WIDTH = 54
+CAT_WINDOW_HEIGHT = 54
 
 
 @dataclass(frozen=True)
@@ -204,10 +204,9 @@ class CatReminder:
         canvas.delete("all")
         self.sprite_frames = self.sprites[style.name]
         self.current_pose = 0
-        self.sprite_item = canvas.create_image(100, 90, image=self.sprite_frames[0])
-        canvas.create_text(100, 194, text=style.name, fill="#51413a", font=("TkDefaultFont", 11, "bold"))
+        self.sprite_item = canvas.create_image(27, 27, image=self.sprite_frames[0])
         self.heart = canvas.create_text(
-            70, 24, text="♥", fill="#e5788c", font=("TkDefaultFont", 22, "bold"), state="hidden"
+            12, 8, text="♥", fill="#e5788c", font=("TkDefaultFont", 12, "bold"), state="hidden"
         )
 
     def show_cat(self):

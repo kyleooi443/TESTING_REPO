@@ -123,11 +123,11 @@ namespace MinuteCat
                             throw new InvalidOperationException("Cat artwork has an unexpected size.");
                         for (int style = 0; style < Styles.Length; style++)
                         {
-                            var sprite = new Bitmap(171, 171);
+                            var sprite = new Bitmap(43, 43);
                             using (var graphics = Graphics.FromImage(sprite))
                             {
                                 graphics.InterpolationMode = InterpolationMode.HighQualityBicubic;
-                                graphics.DrawImage(sheet, new Rectangle(0, 0, 171, 171),
+                                graphics.DrawImage(sheet, new Rectangle(0, 0, 43, 43),
                                     new Rectangle((style % 3) * 512, (style / 3) * 512, 512, 512),
                                     GraphicsUnit.Pixel);
                             }
@@ -143,7 +143,7 @@ namespace MinuteCat
             animation.Stop();
             catWindow.Hide();
             currentStyle = styleChoice.SelectedIndex == 0 ? nextStyle++ % Styles.Length : styleChoice.SelectedIndex - 1;
-            catWindow.SetCat(sprites[currentStyle, 0], Styles[currentStyle]);
+            catWindow.SetCat(sprites[currentStyle, 0]);
             walkStarted = DateTime.UtcNow;
             PlaceCat(0);
             catWindow.Show();
@@ -163,7 +163,7 @@ namespace MinuteCat
                 return;
             }
             PlaceCat(elapsed / 10);
-            catWindow.SetCat(sprites[currentStyle, (int)(elapsed * 6) % 2], Styles[currentStyle]);
+            catWindow.SetCat(sprites[currentStyle, (int)(elapsed * 6) % 2]);
         }
 
         private void PlaceCat(double progress)
@@ -207,7 +207,6 @@ namespace MinuteCat
     {
         private readonly Timer heartTimer = new Timer { Interval = 900 };
         private Bitmap sprite;
-        private string catName;
         private bool showHeart;
 
         public CatWindow()
@@ -215,7 +214,7 @@ namespace MinuteCat
             FormBorderStyle = FormBorderStyle.None;
             ShowInTaskbar = false;
             TopMost = true;
-            ClientSize = new Size(200, 210);
+            ClientSize = new Size(54, 54);
             BackColor = Color.FromArgb(255, 245, 233);
             TransparencyKey = BackColor;
             DoubleBuffered = true;
@@ -232,10 +231,9 @@ namespace MinuteCat
             };
         }
 
-        public void SetCat(Bitmap image, string name)
+        public void SetCat(Bitmap image)
         {
             sprite = image;
-            catName = name;
             Invalidate();
         }
 
@@ -243,16 +241,12 @@ namespace MinuteCat
         {
             base.OnPaint(args);
             if (sprite == null) return;
-            args.Graphics.DrawImageUnscaled(sprite, 14, 4);
-            using (var font = new Font("Segoe UI", 10, FontStyle.Bold))
-            using (var brush = new SolidBrush(Color.FromArgb(81, 65, 58)))
-            using (var format = new StringFormat { Alignment = StringAlignment.Center })
-                args.Graphics.DrawString(catName, font, brush, new RectangleF(0, 185, 200, 24), format);
+            args.Graphics.DrawImageUnscaled(sprite, 5, 5);
             if (showHeart)
             {
-                using (var font = new Font("Segoe UI Symbol", 23, FontStyle.Bold))
+                using (var font = new Font("Segoe UI Symbol", 12, FontStyle.Bold))
                 using (var brush = new SolidBrush(Color.FromArgb(229, 120, 140)))
-                    args.Graphics.DrawString("♥", font, brush, 55, 5);
+                    args.Graphics.DrawString("♥", font, brush, 8, 2);
             }
         }
     }
