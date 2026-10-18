@@ -2,7 +2,8 @@
 
 from dataclasses import dataclass
 from itertools import cycle
-from math import pi, sin
+from math import sin
+from pathlib import Path
 from time import monotonic
 import tkinter as tk
 from tkinter import ttk
@@ -12,25 +13,51 @@ MINUTE_MS = 60_000
 FRAME_MS = 33
 WALK_SECONDS = 10.0
 BACKGROUND = "#fff5e9"
+ASSET_DIR = Path(__file__).resolve().parent / "assets"
+SPRITE_SIZE = 512
 
 
 @dataclass(frozen=True)
 class CatStyle:
     name: str
-    fur: str
-    eyes: str
-    pattern: str
-    accent: str
+    cell: int
 
 
 CAT_STYLES = (
-    CatStyle("Orange tabby", "#f3a856", "#3d6844", "tabby", "#b56b32"),
-    CatStyle("Tuxedo", "#292d35", "#e4c34a", "tuxedo", "#f8f7ef"),
-    CatStyle("Black cat", "#27272e", "#a9d96b", "plain", "#77747a"),
-    CatStyle("Calico", "#f5e7cb", "#3d6844", "calico", "#df873f"),
-    CatStyle("Silver tabby", "#8996a2", "#d8b862", "tabby", "#56636e"),
-    CatStyle("Siamese", "#eadbc4", "#6a93b8", "siamese", "#65524b"),
+    CatStyle("Orange tabby", 0),
+    CatStyle("Tuxedo", 1),
+    CatStyle("Black cat", 2),
+    CatStyle("Calico", 3),
+    CatStyle("Silver tabby", 4),
+    CatStyle("Siamese", 5),
 )
+
+
+def load_sprites(window):
+    """Crop and scale the two transparent sheets with Tk's PNG support."""
+    paths = [ASSET_DIR / filename for filename in ("cats_walk_a.png", "cats_walk_b.png")]
+    for path in paths:
+        if not path.is_file():
+            raise FileNotFoundError(f"Missing {path.name}; download the full Minute Cat ZIP")
+    try:
+        sheets = [tk.PhotoImage(master=window, file=str(path), format="png") for path in paths]
+    except tk.TclError as error:
+        raise ValueError(f"Could not load cat artwork: {error}") from error
+    if any(sheet.width() != 1536 or sheet.height() != 1024 for sheet in sheets):
+        raise ValueError("Cat artwork has an unexpected size; download the full Minute Cat ZIP")
+    sprites = {}
+    for style in CAT_STYLES:
+        x = (style.cell % 3) * SPRITE_SIZE
+        y = (style.cell // 3) * SPRITE_SIZE
+        frames = []
+        for sheet in sheets:
+            cropped = tk.PhotoImage(master=window, width=SPRITE_SIZE, height=SPRITE_SIZE)
+            cropped.tk.call(
+                str(cropped), "copy", str(sheet), "-from", x, y, x + SPRITE_SIZE, y + SPRITE_SIZE
+            )
+            frames.append(cropped.subsample(2, 2))
+        sprites[style.name] = tuple(frames)
+    return sprites
 
 
 def walk_x(progress, screen_width, window_width):
@@ -122,17 +149,18 @@ class CatReminder:
         except tk.TclError:
             pass  # Color transparency is available on some desktops, including Windows.
         self.canvas = tk.Canvas(
-            self.cat_window, width=240, height=170, bg=BACKGROUND, highlightthickness=0
+            self.cat_window, width=280, height=290, bg=BACKGROUND, highlightthickness=0
         )
         self.canvas.pack()
         self.canvas.bind("<Button-1>", self.pet_cat)
         self.cat_window.withdraw()
 
+        self.sprites = load_sprites(self.window)
         self.styles = cycle(CAT_STYLES)
         self.current_style = None
-        self.legs = []
-        self.eyes = []
-        self.tail = None
+        self.sprite_item = None
+        self.sprite_frames = None
+        self.current_pose = -1
         self.heart = None
         self.heart_job = None
         self.walk_job = None
@@ -143,53 +171,12 @@ class CatReminder:
     def draw_cat(self, style):
         canvas = self.canvas
         canvas.delete("all")
-        outline = "#51413a" if style.pattern != "plain" else "#77747a"
-        canvas.create_oval(49, 130, 198, 144, fill="#d9cbbb", outline="")
-        self.legs = [
-            (canvas.create_line(x, 91, x, 126, fill=style.fur, width=12, capstyle="round"), x)
-            for x in (88, 112, 146, 170)
-        ]
-        self.tail = canvas.create_line(
-            165, 74, 192, 68, 211, 41, 216, 20,
-            fill=style.fur, width=13, capstyle="round", smooth=True,
-        )
-        canvas.create_oval(67, 44, 183, 105, fill=style.fur, outline=outline, width=2)
-        canvas.create_polygon(34, 51, 42, 10, 62, 39, fill=style.fur, outline=outline, width=2)
-        canvas.create_polygon(70, 39, 88, 9, 96, 54, fill=style.fur, outline=outline, width=2)
-        canvas.create_polygon(44, 23, 47, 35, 56, 35, fill="#df9298", outline="")
-        canvas.create_polygon(82, 22, 77, 35, 88, 39, fill="#df9298", outline="")
-        canvas.create_oval(27, 34, 103, 99, fill=style.fur, outline=outline, width=2)
-
-        if style.pattern == "tabby":
-            for x in (101, 125, 149):
-                canvas.create_line(x, 49, x - 7, 67, fill=style.accent, width=4)
-            for x in (55, 68, 81):
-                canvas.create_line(x, 40, x, 51, fill=style.accent, width=3)
-        elif style.pattern == "tuxedo":
-            canvas.create_oval(76, 70, 127, 102, fill=style.accent, outline="")
-            canvas.create_oval(40, 72, 83, 96, fill=style.accent, outline="")
-        elif style.pattern == "calico":
-            canvas.create_oval(95, 49, 133, 77, fill=style.accent, outline="")
-            canvas.create_oval(144, 62, 177, 91, fill="#3a3539", outline="")
-            canvas.create_oval(68, 37, 94, 59, fill=style.accent, outline="")
-        elif style.pattern == "siamese":
-            canvas.create_oval(36, 54, 92, 96, fill=style.accent, outline="")
-            canvas.create_polygon(35, 49, 42, 11, 61, 39, fill=style.accent, outline="")
-            canvas.create_polygon(70, 39, 88, 10, 96, 53, fill=style.accent, outline="")
-
-        self.eyes = [
-            (canvas.create_oval(x, 62, x + 8, 73, fill=style.eyes, outline=""), x)
-            for x in (47, 77)
-        ]
-        canvas.create_polygon(61, 78, 71, 78, 66, 84, fill="#d78893", outline="")
-        canvas.create_arc(56, 76, 66, 91, start=195, extent=135, style="arc", outline=outline, width=2)
-        canvas.create_arc(66, 76, 76, 91, start=205, extent=135, style="arc", outline=outline, width=2)
-        for end_y in (72, 84, 96):
-            canvas.create_line(52, 83, 15, end_y, fill=outline, width=2)
-            canvas.create_line(80, 83, 117, end_y, fill=outline, width=2)
-        canvas.create_text(120, 156, text=style.name, fill="#51413a", font=("TkDefaultFont", 11, "bold"))
+        self.sprite_frames = self.sprites[style.name]
+        self.current_pose = 0
+        self.sprite_item = canvas.create_image(140, 130, image=self.sprite_frames[0])
+        canvas.create_text(140, 274, text=style.name, fill="#51413a", font=("TkDefaultFont", 12, "bold"))
         self.heart = canvas.create_text(
-            115, 22, text="♥", fill="#e5788c", font=("TkDefaultFont", 22, "bold"), state="hidden"
+            100, 34, text="♥", fill="#e5788c", font=("TkDefaultFont", 26, "bold"), state="hidden"
         )
 
     def show_cat(self):
@@ -222,14 +209,10 @@ class CatReminder:
         x = walk_x(progress, self.cat_window.winfo_screenwidth(), width)
         y = max(0, self.cat_window.winfo_screenheight() - height - 20) + round(abs(sin(elapsed * 14)) * 3)
         self.cat_window.geometry(f"+{x}+{y}")
-        for index, (leg, base_x) in enumerate(self.legs):
-            swing = round(sin(elapsed * 14 + (index % 2) * pi) * 9)
-            self.canvas.coords(leg, base_x, 91, base_x + swing, 126)
-        swish = sin(elapsed * 4) * 8
-        self.canvas.coords(self.tail, 165, 74, 192, 68, 211, 41 + swish, 216, 20 + swish)
-        blinking = elapsed > 0.5 and elapsed % 3.7 < 0.13
-        for eye, eye_x in self.eyes:
-            self.canvas.coords(eye, eye_x, 67 if blinking else 62, eye_x + 8, 69 if blinking else 73)
+        pose = int(elapsed * 6) % 2
+        if pose != self.current_pose:
+            self.canvas.itemconfigure(self.sprite_item, image=self.sprite_frames[pose])
+            self.current_pose = pose
         self.walk_job = self.cat_window.after(FRAME_MS, self.walk_frame)
 
     def hide_cat(self):
@@ -271,3 +254,5 @@ if __name__ == "__main__":
         CatReminder().run()
     except tk.TclError as error:
         raise SystemExit(f"Minute Cat needs a graphical desktop: {error}") from None
+    except (FileNotFoundError, ValueError) as error:
+        raise SystemExit(str(error)) from None

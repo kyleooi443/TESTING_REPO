@@ -65,10 +65,10 @@ class MinuteCatTests(unittest.TestCase):
         self.assertEqual(positions[-1], 0)
         self.assertEqual(positions, sorted(positions, reverse=True))
 
-    def test_cat_styles_have_distinct_names_and_patterns(self):
+    def test_cat_styles_have_distinct_sprite_cells(self):
         self.assertEqual(len(CAT_STYLES), 6)
         self.assertEqual(len({style.name for style in CAT_STYLES}), 6)
-        self.assertGreaterEqual(len({style.pattern for style in CAT_STYLES}), 5)
+        self.assertEqual({style.cell for style in CAT_STYLES}, set(range(6)))
 
 
 if __name__ == "__main__":
