@@ -5,8 +5,12 @@ from itertools import cycle
 from math import sin
 from pathlib import Path
 from time import monotonic
+import base64
+import sys
 import tkinter as tk
 from tkinter import ttk
+import zipfile
+import zipimport
 
 
 MINUTE_MS = 60_000
@@ -33,14 +37,30 @@ CAT_STYLES = (
 )
 
 
+def artwork_bytes(filename):
+    """Read artwork beside the source or from the standalone zip app."""
+    path = ASSET_DIR / filename
+    if path.is_file():
+        return path.read_bytes()
+    if isinstance(__loader__, zipimport.zipimporter):
+        with zipfile.ZipFile(__loader__.archive) as bundle:
+            try:
+                return bundle.read(f"assets/{filename}")
+            except KeyError:
+                pass
+    raise FileNotFoundError(
+        "Cat artwork is missing. Extract the entire repository ZIP, including the assets "
+        "folder, or run the standalone Minute-Cat.pyz file."
+    )
+
+
 def load_sprites(window):
     """Crop and scale the two transparent sheets with Tk's PNG support."""
-    paths = [ASSET_DIR / filename for filename in ("cats_walk_a.png", "cats_walk_b.png")]
-    for path in paths:
-        if not path.is_file():
-            raise FileNotFoundError(f"Missing {path.name}; download the full Minute Cat ZIP")
     try:
-        sheets = [tk.PhotoImage(master=window, file=str(path), format="png") for path in paths]
+        sheets = [
+            tk.PhotoImage(master=window, data=base64.b64encode(artwork_bytes(filename)), format="png")
+            for filename in ("cats_walk_a.png", "cats_walk_b.png")
+        ]
     except tk.TclError as error:
         raise ValueError(f"Could not load cat artwork: {error}") from error
     if any(sheet.width() != 1536 or sheet.height() != 1024 for sheet in sheets):
@@ -155,7 +175,11 @@ class CatReminder:
         self.canvas.bind("<Button-1>", self.pet_cat)
         self.cat_window.withdraw()
 
-        self.sprites = load_sprites(self.window)
+        try:
+            self.sprites = load_sprites(self.window)
+        except (FileNotFoundError, ValueError):
+            self.window.destroy()
+            raise
         self.styles = cycle(CAT_STYLES)
         self.current_style = None
         self.sprite_item = None
@@ -249,10 +273,27 @@ class CatReminder:
         self.window.mainloop()
 
 
-if __name__ == "__main__":
+def main():
     try:
         CatReminder().run()
     except tk.TclError as error:
-        raise SystemExit(f"Minute Cat needs a graphical desktop: {error}") from None
+        show_startup_error(f"Minute Cat needs a graphical desktop: {error}")
     except (FileNotFoundError, ValueError) as error:
-        raise SystemExit(str(error)) from None
+        show_startup_error(str(error))
+
+
+def show_startup_error(message):
+    print(message, file=sys.stderr)
+    try:
+        from tkinter import messagebox
+
+        dialog = tk.Tk()
+        dialog.withdraw()
+        messagebox.showerror("Minute Cat", message, parent=dialog)
+        dialog.destroy()
+    except tk.TclError:
+        pass
+
+
+if __name__ == "__main__":
+    main()

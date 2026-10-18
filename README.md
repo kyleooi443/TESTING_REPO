@@ -8,7 +8,11 @@ The control window lets you preview a walk with **Show now**, **Pause** or **Res
 
 The walking cat stays on top. On Windows, its background is transparent; other desktops may show a small light background behind it.
 
-Requires Python 3 with Tkinter and a graphical desktop. Keep the `assets` folder beside `cat_reminder.py`. From this directory, run:
+Requires Python 3 with Tkinter and a graphical desktop.
+
+**Easiest download:** save the single [Minute-Cat.pyz](Minute-Cat.pyz) file, then run `py Minute-Cat.pyz` on Windows or `python3 Minute-Cat.pyz` on macOS/Linux. The artwork is inside that file.
+
+If you download the repository ZIP instead, choose **Extract All** before opening `cat_reminder.py`. Keep the `assets` folder beside it. From the extracted directory, run:
 
 ```sh
 python3 cat_reminder.py
@@ -21,3 +25,5 @@ Run the timing test with:
 ```sh
 python3 -m unittest -v
 ```
+
+After changing the source or artwork, rebuild the standalone file with `python3 build_zipapp.py`.

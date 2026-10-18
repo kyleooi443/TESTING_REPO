@@ -1,5 +1,10 @@
 import unittest
+from pathlib import Path
+from tempfile import TemporaryDirectory
+from unittest.mock import patch
+from zipfile import ZipFile
 
+import cat_reminder
 from cat_reminder import CAT_STYLES, MINUTE_MS, ReminderTimer, walk_x
 
 
@@ -27,6 +32,18 @@ class FakeClock:
 
 
 class MinuteCatTests(unittest.TestCase):
+    def test_missing_artwork_explains_how_to_run_the_app(self):
+        with TemporaryDirectory() as temporary:
+            with patch.object(cat_reminder, "ASSET_DIR", Path(temporary) / "missing"):
+                with self.assertRaisesRegex(FileNotFoundError, "Extract the entire repository ZIP"):
+                    cat_reminder.artwork_bytes("cats_walk_a.png")
+
+    def test_standalone_app_contains_current_source_and_artwork(self):
+        root = Path(__file__).resolve().parent
+        with ZipFile(root / "Minute-Cat.pyz") as bundle:
+            for name in ("cat_reminder.py", "assets/cats_walk_a.png", "assets/cats_walk_b.png"):
+                self.assertEqual(bundle.read(name), (root / name).read_bytes())
+
     def test_reminder_repeats_and_manual_show_resets_timer(self):
         clock = FakeClock()
         shown = []
