@@ -8,6 +8,7 @@ on:
       - assets/**
       - cat_reminder.py
       - Minute-Cat.pyz
+      - test_cat_reminder.py
   workflow_dispatch:
 
 permissions:

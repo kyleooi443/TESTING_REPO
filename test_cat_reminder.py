@@ -42,7 +42,12 @@ class MinuteCatTests(unittest.TestCase):
         root = Path(__file__).resolve().parent
         with ZipFile(root / "Minute-Cat.pyz") as bundle:
             for name in ("cat_reminder.py", "assets/cats_walk_a.png", "assets/cats_walk_b.png"):
-                self.assertEqual(bundle.read(name), (root / name).read_bytes())
+                bundled = bundle.read(name)
+                source = (root / name).read_bytes()
+                if name.endswith(".py"):
+                    bundled = bundled.replace(b"\r\n", b"\n")
+                    source = source.replace(b"\r\n", b"\n")
+                self.assertEqual(bundled, source)
 
     def test_reminder_repeats_and_manual_show_resets_timer(self):
         clock = FakeClock()
