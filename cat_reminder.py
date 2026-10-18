@@ -19,6 +19,9 @@ WALK_SECONDS = 10.0
 BACKGROUND = "#fff5e9"
 ASSET_DIR = Path(__file__).resolve().parent / "assets"
 SPRITE_SIZE = 512
+DISPLAY_SCALE = 3
+CAT_WINDOW_WIDTH = 200
+CAT_WINDOW_HEIGHT = 210
 
 
 @dataclass(frozen=True)
@@ -75,7 +78,7 @@ def load_sprites(window):
             cropped.tk.call(
                 str(cropped), "copy", str(sheet), "-from", x, y, x + SPRITE_SIZE, y + SPRITE_SIZE
             )
-            frames.append(cropped.subsample(2, 2))
+            frames.append(cropped.subsample(DISPLAY_SCALE, DISPLAY_SCALE))
         sprites[style.name] = tuple(frames)
     return sprites
 
@@ -169,7 +172,11 @@ class CatReminder:
         except tk.TclError:
             pass  # Color transparency is available on some desktops, including Windows.
         self.canvas = tk.Canvas(
-            self.cat_window, width=280, height=290, bg=BACKGROUND, highlightthickness=0
+            self.cat_window,
+            width=CAT_WINDOW_WIDTH,
+            height=CAT_WINDOW_HEIGHT,
+            bg=BACKGROUND,
+            highlightthickness=0,
         )
         self.canvas.pack()
         self.canvas.bind("<Button-1>", self.pet_cat)
@@ -197,10 +204,10 @@ class CatReminder:
         canvas.delete("all")
         self.sprite_frames = self.sprites[style.name]
         self.current_pose = 0
-        self.sprite_item = canvas.create_image(140, 130, image=self.sprite_frames[0])
-        canvas.create_text(140, 274, text=style.name, fill="#51413a", font=("TkDefaultFont", 12, "bold"))
+        self.sprite_item = canvas.create_image(100, 90, image=self.sprite_frames[0])
+        canvas.create_text(100, 194, text=style.name, fill="#51413a", font=("TkDefaultFont", 11, "bold"))
         self.heart = canvas.create_text(
-            100, 34, text="♥", fill="#e5788c", font=("TkDefaultFont", 26, "bold"), state="hidden"
+            70, 24, text="♥", fill="#e5788c", font=("TkDefaultFont", 22, "bold"), state="hidden"
         )
 
     def show_cat(self):
